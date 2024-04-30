@@ -19,12 +19,13 @@ class Actor(nn.Module):
         self.fc3 = nn.Linear(hidden2, n_actions)
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
+
         self.init_weights(init_w)
     
     def init_weights(self, init_w):
         self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
-        self.fc3.uniform_(-init_w, init_w)
+        self.fc3.weight.uniform_(-init_w, init_w)
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
