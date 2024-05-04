@@ -16,9 +16,6 @@ class Trainer:
         self.replay_memory = replay_memory
         self.model = model
 
-
-    def calculate_reward(self, initial_latency, initial_tps,previous_latency, previous_tps, current_latency, current_tps):
-        pass
     
     def update_knob_values(knobs, actions):
         """
@@ -54,6 +51,8 @@ class Trainer:
 
 
     def train(self, num_episodes, batch_size, gamma, tau):
+        fine_state_actions = []
+
 
         for episode in range(num_episodes):
             self.environment.init_environment()
@@ -61,19 +60,30 @@ class Trainer:
             current_state = self.environment.get_states()
 
             initial_latency, initial_tps = self.environment.get_reward_metrics()
+            previous_latency, previous_tps = initial_latency, initial_tps
 
             while True:
-                # action = self.model.select_action(current_state)
+                action = self.model.select_action(current_state)
 
-                # knobs_to_set = self.update_knob_values(current_state, action)
+                knobs_to_set = self.update_knob_values(current_state, action)
 
-                # self.environment.apply_actions(instance_name, knobs_to_set)
+                next_state, reward, ext_metrics = self.environment.step(instance_name=instance_name, knobs=knobs_to_set, initial_latency=initial_latency, initial_tps=initial_tps, previous_latency=previous_latency, previous_tps=previous_tps)
 
-                reward = self.environment.get_reward_metrics(instance_name=instance_name)
+                self.replay_memory.add(reward, (current_state, action, reward, next_state, False))
 
+                if reward > 5:
+                    fine_state_actions.append((next_state, action))
 
+                self.model.add_sample(current_state, action, reward, next_state, False)
+    
+                current_state = next_state
+                previous_latency, previous_tps = ext_metrics
 
-
+                if len(self.model.replay_memory) > batch_size:
+                    batch = self.model.sample_batch(batch_size)
+                    done = self.model.update(batch, gamma, tau)
+                    if done:
+                        break
 
     
         # for each episode

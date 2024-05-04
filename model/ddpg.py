@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
+from replay_memory.replay_memory import PrioritizedReplayMemory
 
 def fanin_init(size, fanin=None):
     fanin = fanin or size[0]
@@ -54,6 +56,27 @@ class Critic(nn.Module):
         x = self.fc3(x)
         return x
     
+class Normalizer(object):
+
+    def __init__(self, mean, variance):
+        if isinstance(mean, list):
+            mean = np.array(mean)
+        if isinstance(variance, list):
+            variance = np.array(variance)
+        self.mean = mean
+        self.std = np.sqrt(variance+0.00001)
+
+    def normalize(self, x):
+        if isinstance(x, list):
+            x = np.array(x)
+        x = x - self.mean
+        x = x / self.std
+
+        return Variable(torch.FloatTensor(x))
+
+    def __call__(self, x, *args, **kwargs):
+        return self.normalize(x)
+
 
 class DDPG(object):
     def __init__(self, n_states, n_actions, hidden1=400, hidden2=300, lr_actor=1e-4, lr_critic=1e-3, gamma=0.99, tau=1e-3):
@@ -75,6 +98,9 @@ class DDPG(object):
 
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
 
+        self.replay_memory = PrioritizedReplayMemory(100000)
+        self.normalizer = Normalizer([0]*n_states, [1]*n_states)
+
     def hard_update(self, target, source):
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(param.data)
@@ -91,10 +117,60 @@ class DDPG(object):
         self.actor.train()
         return action
     
+    def add_sample(self, state, action, reward, next_state, terminate):
+            self.critic.eval()
+            self.actor.eval()
+            self.actor_target.eval()
+            self.critic_target.eval()
+
+            batch_state = self.normalizer([state.tolist()])
+            batch_next_state = self.normalizer([next_state.tolist()])
+
+            current_value = self.critic(batch_state, self.totensor([action.tolist()]))
+
+            target_action = self.critic_target(batch_next_state)
+
+            target_value = self.totensor([reward]) + self.totensor([0 if x else 1 for x in [terminate]])  * self.critic_target(batch_next_state, target_action) * self.gamma
+            error = float(torch.abs(current_value - target_value).data.numpy()[0])
+
+            self.actor_target.train()
+            self.actor.train()
+            self.critic.train()
+            self.critic_target.train()
+            self.replay_memory.add(error, (state, action, reward, next_state, terminate))
+
+    
+    def sample_batch(self, batch_size):
+        """Samples a batch from the replay memory.
+
+        Returns:
+            tuple: Batch data (idx, states, next_states, actions, rewards, terminates).
+        """
+        batch, idx = self.replay_memory.sample(batch_size)
+
+        states = map(lambda x: x[0].tolist(), batch)
+
+        next_states = map(lambda x: x[3].tolist(), batch)
+
+        actions = map(lambda x: x[1].tolist(), batch)
+
+        rewards = map(lambda x: x[2], batch)
+        
+        terminates = map(lambda x: x[4], batch)
+
+        return idx, states, next_states, actions, rewards, terminates
+
+
+
     def update(self, batch):
         states, actions, rewards, next_states, dones = batch
 
-        # Update critic
+        states = torch.tensor(states, dtype=torch.float)
+        actions = torch.tensor(actions, dtype=torch.float)
+        rewards = torch.tensor(rewards, dtype=torch.float)
+        next_states = torch.tensor(next_states, dtype=torch.float)
+        dones = torch.tensor(dones, dtype=torch.float)
+            # Update critic
         self.critic_optimizer.zero_grad()
         next_actions = self.actor_target(next_states)
         Q_targets_next = self.critic_target(next_states, next_actions.detach())
@@ -114,6 +190,8 @@ class DDPG(object):
         # Soft update target networks
         self.soft_update(self.critic_target, self.critic)
         self.soft_update(self.actor_target, self.actor)
+
+        return dones
 
 
 

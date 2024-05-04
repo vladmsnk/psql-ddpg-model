@@ -9,8 +9,28 @@ def RunClient(host, port) -> environment_pb2_grpc.EnvironmentStub:
 
 
 class Environment:
-    def __init__(self, client : environment_pb2_grpc.EnvironmentStub):
+    def __init__(self, client : environment_pb2_grpc.EnvironmentStub, dryrun=False):
         self.client = client
+        self.dryrun = dryrun
+
+    def calculate_reward(self, initial_latency, initial_tps, previous_latency, previous_tps, current_latency, current_tps):
+        pass
+
+
+    def step(self, instance_name, knobs, initial_latency, initial_tps, previous_latency, previous_tps):
+        if self.dryrun:
+            return
+        self.apply_actions(instance_name, knobs)
+
+        latency, tps = self.get_reward_metrics(instance_name)
+
+        next_state = self.get_states(instance_name)
+
+        reward = self.calculate_reward(initial_latency, initial_tps, previous_latency, previous_tps, latency, tps)
+        # if rate = tps/latency is the best we have seen so far, save the knobs and the state
+        return next_state, reward, (latency, tps)
+ 
+
 
     def get_states(self, instance_name):
         return self.client.GetStates(environment_pb2.GetStatesRequest(instance_name=instance_name)).metrics
