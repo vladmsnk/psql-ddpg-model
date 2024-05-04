@@ -1,6 +1,6 @@
+import numpy as np
 import random
 import pickle
-import numpy as np
 
 class SumTree:
     def __init__(self, capacity):
@@ -46,50 +46,50 @@ class SumTree:
     def total_priority(self):
         return self.tree[0]
     
-    class PrioritizedReplayMemory:
-        def __init__(self, capacity, alpha=0.6, beta=0.4, beta_increment_per_sampling=0.001):
-            self.tree = SumTree(capacity)
-            self.alpha = alpha # Alpha parameter for prioritized experience replay
-            self.beta = beta # Beta parameter for prioritized experience replay
-            self.beta_increment_per_sampling = beta_increment_per_sampling # Beta increment per sampling
-            self.capacity = capacity # Capacity of the replay memory
-            self.size = 0 # Number of transitions stored in the replay memory
+class PrioritizedReplayMemory:
+    def __init__(self, capacity, alpha=0.6, beta=0.4, beta_increment_per_sampling=0.001):
+        self.tree = SumTree(capacity)
+        self.alpha = alpha # Alpha parameter for prioritized experience replay
+        self.beta = beta # Beta parameter for prioritized experience replay
+        self.beta_increment_per_sampling = beta_increment_per_sampling # Beta increment per sampling
+        self.capacity = capacity # Capacity of the replay memory
+        self.size = 0 # Number of transitions stored in the replay memory
 
-        def _get_priority(self, error):
-            return (np.abs(error) + 1e-6) ** self.alpha
+    def _get_priority(self, error):
+        return (np.abs(error) + 1e-6) ** self.alpha
+
+    def add(self, error, sample):
+        priority = self._get_priority(error)
+        self.tree.add(priority, sample)
+        self.size = min(self.size + 1, self.capacity)
+
+    def sample(self, batch_size):
+        batch_idx = np.empty(batch_size, dtype=np.int32)
+        batch_memory = np.empty(batch_size, dtype=object)
+        batch_weights = np.empty(batch_size, dtype=np.float32)
+        segment = self.tree.total_priority() / batch_size
+        self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
+        for i in range(batch_size):
+            a = segment * i
+            b = segment * (i + 1)
+            s = random.uniform(a, b)
+            idx, priority, data = self.tree.get_leaf(s)
+            batch_idx[i] = idx
+            batch_memory[i] = data
+            batch_weights[i] = (priority / self.tree.total_priority()) ** -self.beta
+        return batch_idx, batch_memory, batch_weights
     
-        def add(self, error, sample):
-            priority = self._get_priority(error)
-            self.tree.add(priority, sample)
-            self.size = min(self.size + 1, self.capacity)
+    def update(self, idx, error):
+        priority = self._get_priority(error)
+        self.tree.update(idx, priority)
 
-        def sample(self, batch_size):
-            batch_idx = np.empty(batch_size, dtype=np.int32)
-            batch_memory = np.empty(batch_size, dtype=object)
-            batch_weights = np.empty(batch_size, dtype=np.float32)
-            segment = self.tree.total_priority() / batch_size
-            self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
-            for i in range(batch_size):
-                a = segment * i
-                b = segment * (i + 1)
-                s = random.uniform(a, b)
-                idx, priority, data = self.tree.get_leaf(s)
-                batch_idx[i] = idx
-                batch_memory[i] = data
-                batch_weights[i] = (priority / self.tree.total_priority()) ** -self.beta
-            return batch_idx, batch_memory, batch_weights
-        
-        def update(self, idx, error):
-            priority = self._get_priority(error)
-            self.tree.update(idx, priority)
-
-        def save(self, path):
-            with open(path, 'wb') as f:
-                pickle.dump(self.tree, f)
-        
-        def load(self, path):
-            with open(path, 'rb') as f:
-                self.tree = pickle.load(f)
-                self.capacity = self.tree.capacity
-                self.size = self.tree.data_pointer
+    def save(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump(self.tree, f)
+    
+    def load(self, path):
+        with open(path, 'rb') as f:
+            self.tree = pickle.load(f)
+            self.capacity = self.tree.capacity
+            self.size = self.tree.data_pointer
 

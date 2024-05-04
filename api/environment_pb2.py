@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x61pi/environment.proto\x12\tcollector\")\n\x10GetStatesRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"$\n\x11GetStatesResponse\x12\x0f\n\x07metrics\x18\x01 \x03(\x02\"\x85\x01\n\x13\x41pplyActionsRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\x12\x32\n\x05knobs\x18\x02 \x01(\x0b\x32#.collector.ApplyActionsRequest.Knob\x1a#\n\x04Knob\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02\"\x16\n\x14\x41pplyActionsResponse\"0\n\x17GetRewardMetricsRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"8\n\x18GetRewardMetricsResponse\x12\x0f\n\x07latency\x18\x01 \x01(\x02\x12\x0b\n\x03tps\x18\x02 \x01(\x02\"/\n\x16InitEnvironmentRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"\x19\n\x17InitEnvironmentResponse2\xdd\x02\n\x0b\x45nvironment\x12\x46\n\tGetStates\x12\x1b.collector.GetStatesRequest\x1a\x1c.collector.GetStatesResponse\x12O\n\x0c\x41pplyActions\x12\x1e.collector.ApplyActionsRequest\x1a\x1f.collector.ApplyActionsResponse\x12[\n\x10GetRewardMetrics\x12\".collector.GetRewardMetricsRequest\x1a#.collector.GetRewardMetricsResponse\x12X\n\x0fInitEnvironment\x12!.collector.InitEnvironmentRequest\x1a\".collector.InitEnvironmentResponseB\x08Z\x06pkg/pbb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x61pi/environment.proto\x12\tcollector\")\n\x10GetStatesRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"$\n\x11GetStatesResponse\x12\x0f\n\x07metrics\x18\x01 \x03(\x02\"\x85\x01\n\x13\x41pplyActionsRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\x12\x32\n\x05knobs\x18\x02 \x01(\x0b\x32#.collector.ApplyActionsRequest.Knob\x1a#\n\x04Knob\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02\"\x16\n\x14\x41pplyActionsResponse\"0\n\x17GetRewardMetricsRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"8\n\x18GetRewardMetricsResponse\x12\x0f\n\x07latency\x18\x01 \x01(\x02\x12\x0b\n\x03tps\x18\x02 \x01(\x02\"/\n\x16InitEnvironmentRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\"\x19\n\x17InitEnvironmentResponse\"=\n\x15GetActionStateRequest\x12\x15\n\rinstance_name\x18\x01 \x01(\t\x12\r\n\x05knobs\x18\x02 \x03(\t\"\x9a\x01\n\x16GetActionStateResponse\x12\x35\n\x05knobs\x18\x01 \x03(\x0b\x32&.collector.GetActionStateResponse.Knob\x1aI\n\x04Knob\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02\x12\x11\n\tmin_value\x18\x03 \x01(\x02\x12\x11\n\tmax_value\x18\x04 \x01(\x02\x32\xb4\x03\n\x0b\x45nvironment\x12\x46\n\tGetStates\x12\x1b.collector.GetStatesRequest\x1a\x1c.collector.GetStatesResponse\x12O\n\x0c\x41pplyActions\x12\x1e.collector.ApplyActionsRequest\x1a\x1f.collector.ApplyActionsResponse\x12[\n\x10GetRewardMetrics\x12\".collector.GetRewardMetricsRequest\x1a#.collector.GetRewardMetricsResponse\x12X\n\x0fInitEnvironment\x12!.collector.InitEnvironmentRequest\x1a\".collector.InitEnvironmentResponse\x12U\n\x0eGetActionState\x12 .collector.GetActionStateRequest\x1a!.collector.GetActionStateResponseB\x08Z\x06pkg/pbb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -40,6 +40,12 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_INITENVIRONMENTREQUEST']._serialized_end=432
   _globals['_INITENVIRONMENTRESPONSE']._serialized_start=434
   _globals['_INITENVIRONMENTRESPONSE']._serialized_end=459
-  _globals['_ENVIRONMENT']._serialized_start=462
-  _globals['_ENVIRONMENT']._serialized_end=811
+  _globals['_GETACTIONSTATEREQUEST']._serialized_start=461
+  _globals['_GETACTIONSTATEREQUEST']._serialized_end=522
+  _globals['_GETACTIONSTATERESPONSE']._serialized_start=525
+  _globals['_GETACTIONSTATERESPONSE']._serialized_end=679
+  _globals['_GETACTIONSTATERESPONSE_KNOB']._serialized_start=606
+  _globals['_GETACTIONSTATERESPONSE_KNOB']._serialized_end=679
+  _globals['_ENVIRONMENT']._serialized_start=682
+  _globals['_ENVIRONMENT']._serialized_end=1118
 # @@protoc_insertion_point(module_scope)
