@@ -7,16 +7,17 @@ from environment.environment import Environment
 from model.ddpg import DDPG
 from replay_memory.replay_memory import PrioritizedReplayMemory
 
-instance_name = ""
+instance_name = "test"
 
 # training DDPG model
 class Trainer:
-    def __init__(self, environment : Environment, replay_memory : PrioritizedReplayMemory, model : DDPG):
+    def __init__(self, model : DDPG, environment : Environment, knobs):
         self.environment = environment
-        self.replay_memory = replay_memory
         self.model = model
+        self.knobs = knobs
 
     
+    @staticmethod
     def update_knob_values(knobs, actions):
         """
         Adjusts the knob settings based on a list of action values from an actor network.
@@ -50,62 +51,46 @@ class Trainer:
 
 
 
-    def train(self, num_episodes, batch_size, gamma, tau):
+    def train(self, num_episodes, batch_size):
         fine_state_actions = []
 
 
         for episode in range(num_episodes):
-            self.environment.init_environment()
+            print(f"Episode {episode + 1}/{num_episodes}")
 
-            current_state = self.environment.get_states()
+            self.environment.init_environment(instance_name)
 
-            initial_latency, initial_tps = self.environment.get_reward_metrics()
+            current_state = list(self.environment.get_states(instance_name).metrics)
+
+            initial_latency, initial_tps = self.environment.get_reward_metrics(instance_name)
             previous_latency, previous_tps = initial_latency, initial_tps
 
-            while True:
-                action = self.model.select_action(current_state)
+            i = 0
+            while i < 15:
+                
+                action = self.model.choose_action(current_state)
 
-                knobs_to_set = self.update_knob_values(current_state, action)
+                knobs_to_set = self.update_knob_values(self.knobs, action)
 
                 next_state, reward, ext_metrics = self.environment.step(instance_name=instance_name, knobs=knobs_to_set, initial_latency=initial_latency, initial_tps=initial_tps, previous_latency=previous_latency, previous_tps=previous_tps)
 
-                self.replay_memory.add(reward, (current_state, action, reward, next_state, False))
+                self.model.replay_memory.add(reward, (current_state, action, reward, next_state, False))
 
                 if reward > 5:
                     fine_state_actions.append((next_state, action))
 
+
                 self.model.add_sample(current_state, action, reward, next_state, False)
     
                 current_state = next_state
-                previous_latency, previous_tps = ext_metrics
+                previous_tps, previous_latency = ext_metrics
 
                 if len(self.model.replay_memory) > batch_size:
-                    batch = self.model.sample_batch(batch_size)
-                    done = self.model.update(batch, gamma, tau)
-                    if done:
-                        break
+                    self.model.update()
 
-    
-        # for each episode
-        # initialize the environment calling RecommendationsAPI.InitEnvironment
-        # get the initial state calling RecommendationsAPI.GetStates
-        # get the initial latency and tps calling RecommendationsAPI.GetRewardMetrics
-
-        # for each step
-        # select an action using model DDPG.select_action
-        # generate knobs using the action
-        # make environment step calling RecommendationsAPI.ApplyActions
-        # calculate the reward calling RecommendationsAPI.GetRewardMetrics
-        # store the transition in the replay memory
-        # if the replay memory has enough samples then sample a batch of transitions else continue
-        # get current state, action, reward, next state, done from the batch
-        # get current Q values from the critic model
-        # calculate the target Q values using the target critic model
-        # calculate the expected Q values using the critic model
-        # calculate the critic loss
-        # calculate policy loss
-        # update the target critic model
-        # update the target actor model
+                if self.environment.perofrmance_increased:
+                    print(f"Performance increased tps {ext_metrics.tps} latency {ext_metrics.latency}")
+                    break
 
 
 

@@ -12,28 +12,31 @@ class Environment:
     def __init__(self, client : environment_pb2_grpc.EnvironmentStub, dryrun=False):
         self.client = client
         self.dryrun = dryrun
+        self.initiated = False
+        self.perofrmance_increased = False
+        self.start_score = 0
+        
 
     def calculate_reward(self, initial_latency, initial_tps, previous_latency, previous_tps, current_latency, current_tps):
-        pass
+        if 0.6 * current_tps + 0.4*current_latency > self.start_score:
+            self.perofrmance_increased = True
 
 
     def step(self, instance_name, knobs, initial_latency, initial_tps, previous_latency, previous_tps):
         if self.dryrun:
             return
-        self.apply_actions(instance_name, knobs)
+        # self.apply_actions(instance_name, knobs)
 
         latency, tps = self.get_reward_metrics(instance_name)
 
-        next_state = self.get_states(instance_name)
+        next_state = list(self.get_states(instance_name).metrics)
 
         reward = self.calculate_reward(initial_latency, initial_tps, previous_latency, previous_tps, latency, tps)
-        # if rate = tps/latency is the best we have seen so far, save the knobs and the state
-        return next_state, reward, (latency, tps)
+        
+        return next_state, reward, (tps, latency)
  
-
-
     def get_states(self, instance_name):
-        return self.client.GetStates(environment_pb2.GetStatesRequest(instance_name=instance_name)).metrics
+        return self.client.GetStates(environment_pb2.GetStatesRequest(instance_name=instance_name))
     
     def apply_actions(self, instance_name, knobs : dict[str, float]):
         return self.client.ApplyActions(environment_pb2.ApplyActionsRequest(instance_name=instance_name, knobs=knobs))
@@ -43,6 +46,10 @@ class Environment:
     
     def get_reward_metrics(self, instance_name):
         metrics = self.client.GetRewardMetrics(environment_pb2.GetRewardMetricsRequest(instance_name=instance_name))
+        if not self.initiated:
+            self.initiated = True
+            self.start_score = 0.6 * metrics.tps + 0.4 * metrics.latency
+
         return metrics.latency, metrics.tps
     
     def get_action_state(self, instance_name, knobs):
