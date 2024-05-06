@@ -155,7 +155,7 @@ class Actor(nn.Module):
         else:
             self.out = nn.Linear(64, n_actions)
         self._init_weights()
-        self.act = nn.Sigmoid()
+        self.act = nn.Tanh()
 
     def _init_weights(self):
 

@@ -18,29 +18,24 @@ class Trainer:
 
     
     @staticmethod
-    def update_knob_values(knobs, actions):
-        """
-        Adjusts the knob settings based on a list of action values from an actor network.
-
-        Parameters:
-            knobs (dict): A dictionary where each key is the knob name and each value is another
-                        dictionary containing the default value, min_value, and max_value of the knob.
-            actions (list): A list of action values, each between [0, 1], corresponding to each knob.
-
-        Returns:
-            dict: A dictionary with the same structure as `knobs`, but with updated values.
-        """
-
+    def update_knob_values(knobs, actions, scale=0.1):
         updated_knobs = {}
         knob_keys = list(knobs.keys())
 
         for index, action in enumerate(actions):
             knob_key = knob_keys[index]
             knob_info = knobs[knob_key]
+            current_val = knob_info['value']
             min_val = knob_info['min_value']
             max_val = knob_info['max_value']
-            # Linearly interpolate the new knob value based on the action
-            new_value = min_val + (max_val - min_val) * action
+
+            adjustment = (max_val - min_val) * action * scale
+            new_value = current_val + adjustment
+            new_value = max(min_val, min(max_val, new_value)) 
+            
+            if new_value > 0:
+                new_value = round(new_value)
+
             updated_knobs[knob_key] = {
                 'value': new_value,
                 'min_value': min_val,
@@ -74,13 +69,11 @@ class Trainer:
 
                 next_state, reward, ext_metrics = self.environment.step(instance_name=instance_name, knobs=knobs_to_set, initial_latency=initial_latency, initial_tps=initial_tps, previous_latency=previous_latency, previous_tps=previous_tps)
 
-                self.model.replay_memory.add(reward, (current_state, action, reward, next_state, False))
-
                 if reward > 5:
                     fine_state_actions.append((next_state, action))
 
 
-                self.model.add_sample(current_state, action, reward, next_state, False)
+                self.model.add_sample(current_state, action, reward, next_state)
     
                 current_state = next_state
                 previous_tps, previous_latency = ext_metrics
@@ -89,6 +82,7 @@ class Trainer:
                     self.model.update()
 
                 if self.environment.perofrmance_increased:
+                    self.knobs = knobs_to_set
                     print(f"Performance increased tps {ext_metrics.tps} latency {ext_metrics.latency}")
                     break
 
