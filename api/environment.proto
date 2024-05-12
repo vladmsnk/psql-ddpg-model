@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package collector;
+package environment;
 
 option go_package = "pkg/pb";
 
@@ -21,13 +21,13 @@ message GetStatesResponse {
 }
 
 message ApplyActionsRequest {
-  message Knob {
+  message Action {
     string name = 1;
     float value = 2;
   }
 
   string instance_name = 1;
-  Knob knobs = 2;
+  repeated Action actions = 2;
 }
 
 message ApplyActionsResponse {}
@@ -46,6 +46,7 @@ message InitEnvironmentRequest {
 }
 
 message InitEnvironmentResponse {}
+
 
 message GetActionStateRequest {
   string instance_name = 1;

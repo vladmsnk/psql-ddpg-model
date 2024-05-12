@@ -42,35 +42,42 @@ class Environment:
         if qps_reward > 0 and delta_t_latency < 0:
             qps_reward = 0
 
-        # Итоговая награда
         total_reward = 0.6 * tps_reward + 0.4 * qps_reward
         return total_reward
 
 
 
-    def step(self, instance_name, knobs, initial_latency, initial_tps, previous_latency, previous_tps):
+    def step(self, instance_name, knobs, initial_latency, initial_tps, 
+             previous_latency, previous_tps):
         if self.dryrun:
             return
+        
+
         self.apply_actions(instance_name, knobs)
 
         latency, tps = self.get_reward_metrics(instance_name)
 
-        next_state = list(self.get_states(instance_name).metrics)
-
-        reward = self.calculate_reward(initial_latency, initial_tps, previous_latency, previous_tps, latency, tps)
+        next_state = self.get_states(instance_name)
+ 
+        reward = self.calculate_reward(initial_latency, initial_tps, 
+                                       previous_latency, previous_tps, latency, tps)
         
         return next_state, reward, (tps, latency)
  
     def get_states(self, instance_name):
-        return self.client.GetStates(environment_pb2.GetStatesRequest(instance_name=instance_name))
+        return self.client.GetStates(environment_pb2.GetStatesRequest(instance_name=instance_name)).metrics
     
     def apply_actions(self, instance_name, knobs):
-        knobsToSet = {}
+      
+        desc_actions = []
 
         for knob in knobs:
-            knobsToSet[knob] = knobs[knob]['value']
-
-        return self.client.ApplyActions(environment_pb2.ApplyActionsRequest(instance_name=instance_name, knobs=knobsToSet))
+            desc_actions.append({
+                "name": knob,
+                "value": knobs[knob]["value"]
+            })
+    
+        return self.client.ApplyActions(environment_pb2.ApplyActionsRequest(instance_name=instance_name, actions=desc_actions))
     
     def init_environment(self, instance_name):
         return self.client.InitEnvironment(environment_pb2.InitEnvironmentRequest(instance_name=instance_name))

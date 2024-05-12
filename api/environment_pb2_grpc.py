@@ -15,27 +15,27 @@ class EnvironmentStub(object):
             channel: A grpc.Channel.
         """
         self.GetStates = channel.unary_unary(
-                '/collector.Environment/GetStates',
+                '/environment.Environment/GetStates',
                 request_serializer=api_dot_environment__pb2.GetStatesRequest.SerializeToString,
                 response_deserializer=api_dot_environment__pb2.GetStatesResponse.FromString,
                 )
         self.ApplyActions = channel.unary_unary(
-                '/collector.Environment/ApplyActions',
+                '/environment.Environment/ApplyActions',
                 request_serializer=api_dot_environment__pb2.ApplyActionsRequest.SerializeToString,
                 response_deserializer=api_dot_environment__pb2.ApplyActionsResponse.FromString,
                 )
         self.GetRewardMetrics = channel.unary_unary(
-                '/collector.Environment/GetRewardMetrics',
+                '/environment.Environment/GetRewardMetrics',
                 request_serializer=api_dot_environment__pb2.GetRewardMetricsRequest.SerializeToString,
                 response_deserializer=api_dot_environment__pb2.GetRewardMetricsResponse.FromString,
                 )
         self.InitEnvironment = channel.unary_unary(
-                '/collector.Environment/InitEnvironment',
+                '/environment.Environment/InitEnvironment',
                 request_serializer=api_dot_environment__pb2.InitEnvironmentRequest.SerializeToString,
                 response_deserializer=api_dot_environment__pb2.InitEnvironmentResponse.FromString,
                 )
         self.GetActionState = channel.unary_unary(
-                '/collector.Environment/GetActionState',
+                '/environment.Environment/GetActionState',
                 request_serializer=api_dot_environment__pb2.GetActionStateRequest.SerializeToString,
                 response_deserializer=api_dot_environment__pb2.GetActionStateResponse.FromString,
                 )
@@ -104,7 +104,7 @@ def add_EnvironmentServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'collector.Environment', rpc_method_handlers)
+            'environment.Environment', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -123,7 +123,7 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/collector.Environment/GetStates',
+        return grpc.experimental.unary_unary(request, target, '/environment.Environment/GetStates',
             api_dot_environment__pb2.GetStatesRequest.SerializeToString,
             api_dot_environment__pb2.GetStatesResponse.FromString,
             options, channel_credentials,
@@ -140,7 +140,7 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/collector.Environment/ApplyActions',
+        return grpc.experimental.unary_unary(request, target, '/environment.Environment/ApplyActions',
             api_dot_environment__pb2.ApplyActionsRequest.SerializeToString,
             api_dot_environment__pb2.ApplyActionsResponse.FromString,
             options, channel_credentials,
@@ -157,7 +157,7 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/collector.Environment/GetRewardMetrics',
+        return grpc.experimental.unary_unary(request, target, '/environment.Environment/GetRewardMetrics',
             api_dot_environment__pb2.GetRewardMetricsRequest.SerializeToString,
             api_dot_environment__pb2.GetRewardMetricsResponse.FromString,
             options, channel_credentials,
@@ -174,7 +174,7 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/collector.Environment/InitEnvironment',
+        return grpc.experimental.unary_unary(request, target, '/environment.Environment/InitEnvironment',
             api_dot_environment__pb2.InitEnvironmentRequest.SerializeToString,
             api_dot_environment__pb2.InitEnvironmentResponse.FromString,
             options, channel_credentials,
@@ -191,7 +191,7 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/collector.Environment/GetActionState',
+        return grpc.experimental.unary_unary(request, target, '/environment.Environment/GetActionState',
             api_dot_environment__pb2.GetActionStateRequest.SerializeToString,
             api_dot_environment__pb2.GetActionStateResponse.FromString,
             options, channel_credentials,

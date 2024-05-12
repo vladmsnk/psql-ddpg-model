@@ -3,17 +3,18 @@ import pickle
 import numpy as np
 
 
+
 class SumTree(object):
     write = 0
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.tree = np.zeros(2*capacity - 1)
+        self.tree = np.zeros(2 * capacity - 1)
         self.data = np.zeros(capacity, dtype=object)
         self.num_entries = 0
 
     def _propagate(self, idx, change):
-        parent = (idx - 1) / 2
+        parent = (idx - 1) // 2
         self.tree[parent] += change
         if parent != 0:
             self._propagate(parent, change)
@@ -28,7 +29,7 @@ class SumTree(object):
         if s <= self.tree[left]:
             return self._retrieve(left, s)
         else:
-            return self._retrieve(right, s-self.tree[left])
+            return self._retrieve(right, s - self.tree[left])
 
     def total(self):
         return self.tree[0]
@@ -62,8 +63,8 @@ class PrioritizedReplayMemory(object):
     def __init__(self, capacity):
         self.tree = SumTree(capacity)
         self.capacity = capacity
-        self.e = 0.01
-        self.a = 0.6
+        self.e = 0.01  # pylint: disable=invalid-name
+        self.a = 0.6  # pylint: disable=invalid-name
         self.beta = 0.4
         self.beta_increment_per_sampling = 0.001
 
@@ -97,6 +98,10 @@ class PrioritizedReplayMemory(object):
             idxs.append(idx)
         return batch, idxs
 
+        # sampling_probabilities = priorities / self.tree.total()
+        # is_weight = np.power(self.tree.num_entries * sampling_probabilities, -self.beta)
+        # is_weight /= is_weight.max()
+
     def update(self, idx, error):
         p = self._get_priority(error)
         self.tree.update(idx, p)
@@ -110,3 +115,9 @@ class PrioritizedReplayMemory(object):
         with open(path, 'rb') as f:
             _memory = pickle.load(f)
         self.tree = _memory['tree']
+
+    def get(self):
+        return pickle.dumps({"tree": self.tree})
+
+    def set(self, binary):
+        self.tree = pickle.loads(binary)['tree']

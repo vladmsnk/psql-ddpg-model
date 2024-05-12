@@ -9,19 +9,15 @@ port = 7003
 instance_name = "test"
 
 knobs = [
-    "max_connections",
-    "shared_buffers",
     "work_mem",
     "maintenance_work_mem",
-    "wal_buffers",
     "checkpoint_completion_target",
     "effective_cache_size",
-    "autovacuum_max_workers",
     "wal_writer_delay",
     "checkpoint_timeout"
 ]
 
-batchSize = 10
+batchSize = 1
 
 
 
@@ -46,8 +42,7 @@ if __name__ == '__main__':
     actions = fromDescKnobs(actionState.knobs)
 
     metricState = environment.get_states(instance_name=instance_name)
-    states = list(metricState.metrics)
-
+    states = list(metricState)
 
     modelOpts = {
         "alr": 0.001,
@@ -59,7 +54,7 @@ if __name__ == '__main__':
         "memory_size" : 10000,
     }
 
-    model = DDPG(len(states), len(actions), modelOpts)
+    model = DDPG(len(states), len(actions))
 
     trainer = Trainer(model, environment, actions)
     trainer.train(1, batchSize)

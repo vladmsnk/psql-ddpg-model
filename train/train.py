@@ -16,7 +16,6 @@ class Trainer:
         self.model = model
         self.knobs = knobs
 
-    
     @staticmethod
     def update_knob_values(knobs, actions, scale=0.1):
         updated_knobs = {}
@@ -55,13 +54,14 @@ class Trainer:
 
             self.environment.init_environment(instance_name)
 
-            current_state = list(self.environment.get_states(instance_name).metrics)
+            current_state = np.array(self.environment.get_states(instance_name))
 
             initial_latency, initial_tps = self.environment.get_reward_metrics(instance_name)
+
             previous_latency, previous_tps = initial_latency, initial_tps
 
             i = 0
-            while i < 15:
+            while i < 10:
                 
                 action = self.model.choose_action(current_state)
 
@@ -69,23 +69,21 @@ class Trainer:
 
                 next_state, reward, ext_metrics = self.environment.step(instance_name=instance_name, knobs=knobs_to_set, initial_latency=initial_latency, initial_tps=initial_tps, previous_latency=previous_latency, previous_tps=previous_tps)
 
-                if reward > 5:
-                    fine_state_actions.append((next_state, action))
 
-
-                self.model.add_sample(current_state, action, reward, next_state)
+                self.model.add_sample(current_state, action, reward, np.array(next_state))
     
                 current_state = next_state
-                previous_tps, previous_latency = ext_metrics
 
-                if len(self.model.replay_memory) > batch_size:
+                previous_tps, previous_latency = ext_metrics
+                print(f"TPS: {ext_metrics[0]}, Latency: {ext_metrics[1]}")
+
+                if i > 0:
                     self.model.update()
 
                 if self.environment.perofrmance_increased:
                     self.knobs = knobs_to_set
-                    print(f"Performance increased tps {ext_metrics.tps} latency {ext_metrics.latency}")
-                    break
-
+                    print("Performance increased")
+                i+=1
 
 
 # # Example knobs and actions
